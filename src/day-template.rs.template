@@ -1,0 +1,16 @@
+#![allow(dead_code, unused_imports)]
+use aoc::{get_input, report};
+use itertools::Itertools;
+
+fn main() {
+    let input = get_input(__DAY__);
+
+    let a = 1;
+    let b = 2;
+
+    report(&a, &b);
+
+    // uncomment once you have correct to support refactoring
+    // assert_eq!(a, 1);
+    // assert_eq!(b, 2);
+}
