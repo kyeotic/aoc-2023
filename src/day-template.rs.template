@@ -1,4 +1,6 @@
 #![allow(dead_code, unused_imports)]
+#[macro_use]
+extern crate lazy_static;
 use aoc::{get_input, report};
 use itertools::Itertools;
 
