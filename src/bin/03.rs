@@ -31,7 +31,7 @@ fn part1(manual: &Manual) -> u32 {
                 manual
                     .symbols
                     .iter()
-                    .any(|s| p.is_adjacent_diagonal(&s.point()))
+                    .any(|s| p.is_adjacent_diagonal(&(s.into())))
             })
         })
         .map(|p| p.value)
@@ -46,7 +46,7 @@ fn part2(manual: &Manual) -> u32 {
             let adj_parts = manual
                 .numbers
                 .iter()
-                .filter(|pn| pn.points.iter().any(|p| p.is_adjacent_diagonal(&g.point())))
+                .filter(|pn| pn.points.iter().any(|p| p.is_adjacent_diagonal(&g.into())))
                 .map(|p| p.value)
                 .collect_vec();
 
@@ -68,7 +68,7 @@ struct Manual {
 
 impl Manual {
     fn from(input: &str) -> Self {
-        let grid = Grid::new(input.lines().map(|l| l.chars().collect_vec()).collect());
+        let grid = Grid::from(input);
         Self {
             numbers: get_parts(&grid),
             symbols: get_symbols(&grid),
@@ -103,7 +103,7 @@ fn get_parts(grid: &Grid<char>) -> Vec<PartNumber> {
                 .collect_vec()
         })
         .flatten()
-        .collect_vec()
+        .collect()
 }
 
 fn get_symbols(grid: &Grid<char>) -> Vec<GridPoint<char>> {

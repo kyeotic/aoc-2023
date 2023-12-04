@@ -9,6 +9,12 @@ pub struct Grid<T: Copy> {
     pub points: Vec<Vec<GridPoint<T>>>,
 }
 
+impl Grid<char> {
+    pub fn from(s: &str) -> Self {
+        Self::new(s.lines().map(|l| l.chars().collect_vec()).collect())
+    }
+}
+
 impl<T: Copy> Grid<T> {
     pub fn new(vals: Vec<Vec<T>>) -> Self {
         Self {
@@ -88,11 +94,22 @@ impl<T: Clone> GridPoint<T> {
     pub fn new_u(x: usize, y: usize, value: T) -> Self {
         Self::new(x as i32, y as i32, value)
     }
+}
 
-    pub fn point(&self) -> Point {
+impl<T> From<GridPoint<T>> for Point {
+    fn from(item: GridPoint<T>) -> Self {
         Point {
-            x: self.x,
-            y: self.y,
+            x: item.x,
+            y: item.y,
+        }
+    }
+}
+
+impl<T> From<&GridPoint<T>> for Point {
+    fn from(item: &GridPoint<T>) -> Self {
+        Point {
+            x: item.x,
+            y: item.y,
         }
     }
 }
