@@ -3,6 +3,7 @@
 extern crate lazy_static;
 use std::ops::Range;
 
+use aoc::point::Point;
 use aoc::{get_input, report};
 use itertools::Itertools;
 use regex::Regex;
@@ -26,11 +27,10 @@ fn part1(manual: &Manual) -> u32 {
 
     parts
         .iter()
-        .filter(|p| {
-            p.range
-                .clone()
-                // Get adjacent to all points in number
-                .map(|x| manual.get_adjacent(x, p.row))
+        .filter(|pn| {
+            pn.get_points()
+                .iter()
+                .map(|p| manual.get_adjacent(p))
                 .flatten()
                 .unique()
                 .any(is_symbol)
@@ -46,10 +46,9 @@ fn part2(manual: &Manual) -> u32 {
         .get_gears()
         .iter()
         .filter_map(|g| {
-            let adj = manual.get_adjacent_points(g.x, g.y);
             let adj_parts = parts
                 .iter()
-                .filter(|p| adj.iter().any(|(x, y)| p.row == *y && p.range.contains(&x)))
+                .filter(|pn| pn.get_points().iter().any(|p| p.is_adjacent_diagonal(g)))
                 .map(|p| p.value)
                 .collect_vec();
 
@@ -74,8 +73,13 @@ impl Manual {
         Self(input.lines().map(|l| l.chars().collect_vec()).collect())
     }
 
-    fn get(&self, x: usize, y: usize) -> char {
-        self.0.get(y).unwrap().get(x).unwrap().to_owned()
+    fn get(&self, p: &Point) -> char {
+        self.0
+            .get(p.y as usize)
+            .unwrap()
+            .get(p.x as usize)
+            .unwrap()
+            .to_owned()
     }
 
     fn get_parts(&self) -> Vec<PartNumber> {
@@ -107,7 +111,7 @@ impl Manual {
             .map(|(y, row)| {
                 let y = y.clone();
                 row.iter().enumerate().filter_map(move |(x, c)| match c {
-                    '*' => Some(Point { x, y }),
+                    '*' => Some(Point::new_u(x, y)),
                     _ => None,
                 })
             })
@@ -115,25 +119,25 @@ impl Manual {
             .collect_vec()
     }
 
-    fn get_adjacent(&self, x: usize, y: usize) -> Vec<char> {
-        self.get_adjacent_points(x, y)
+    fn get_adjacent(&self, p: &Point) -> Vec<char> {
+        self.get_adjacent_points(p)
             .iter()
-            .map(|(x, y)| self.get(*x, *y))
+            .map(|p| self.get(p))
             .collect_vec()
     }
 
-    fn get_adjacent_points(&self, x: usize, y: usize) -> Vec<(usize, usize)> {
+    fn get_adjacent_points(&self, p: &Point) -> Vec<Point> {
+        p.get_adjacent_diagonal()
+            .iter()
+            .filter(|p| self.is_inside(p))
+            .copied()
+            .collect()
+    }
+
+    fn is_inside(&self, p: &Point) -> bool {
         let x_max = self.0.first().unwrap().len();
         let y_max = self.0.len();
-        ADJACENT
-            .iter()
-            // relative -> absolute
-            .map(|(dx, dy)| (x as i32 + dx, y as i32 + dy))
-            // only valid positions
-            .filter(|(dx, dy)| *dx >= 0 && *dx < x_max as i32 && *dy >= 0 && *dy < y_max as i32)
-            // fix type
-            .map(|(dx, dy)| (dx as usize, dy as usize))
-            .collect_vec()
+        p.x >= 0 && p.x < x_max as i32 && p.y >= 0 && p.y < y_max as i32
     }
 }
 
@@ -144,10 +148,13 @@ struct PartNumber {
     range: Range<usize>,
 }
 
-#[derive(Debug, Clone)]
-struct Point {
-    x: usize,
-    y: usize,
+impl PartNumber {
+    fn get_points(&self) -> Vec<Point> {
+        self.range
+            .clone()
+            .map(|x| Point::new_u(x, self.row))
+            .collect()
+    }
 }
 
 fn is_symbol(c: char) -> bool {

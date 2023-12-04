@@ -1,4 +1,8 @@
+#[macro_use]
+extern crate lazy_static;
 use std::{env, fs};
+
+pub mod point;
 
 pub fn get_input(day: &str) -> String {
     let cwd = env::current_dir().unwrap();
