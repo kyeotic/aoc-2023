@@ -2,6 +2,8 @@
 extern crate lazy_static;
 use std::{env, fs};
 
+pub mod grid;
+pub mod iter;
 pub mod point;
 
 pub fn get_input(day: &str) -> String {
