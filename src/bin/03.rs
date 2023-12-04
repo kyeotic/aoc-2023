@@ -18,22 +18,21 @@ fn main() {
     report(&a, &b);
 
     // uncomment once you have correct to support refactoring
+    // assert_eq!(a, 4361);
     assert_eq!(a, 533775);
     assert_eq!(b, 78236071);
 }
 
 fn part1(manual: &Manual) -> u32 {
     let parts = manual.get_parts();
+    let symbols = manual.get_symbols();
 
     parts
         .iter()
         .filter(|pn| {
             pn.get_points()
                 .iter()
-                .map(|p| manual.get_adjacent(p))
-                .flatten()
-                .unique()
-                .any(is_symbol)
+                .any(|p| symbols.iter().any(|s| p.is_adjacent_diagonal(&s.point)))
         })
         .map(|p| p.value)
         .sum()
@@ -59,10 +58,6 @@ fn part2(manual: &Manual) -> u32 {
             }
         })
         .sum()
-}
-
-lazy_static! {
-    static ref ADJACENT: Vec<(i32, i32)> = (-1..=1).cartesian_product(-1..=1).collect_vec();
 }
 
 #[derive(Debug, Clone)]
@@ -104,33 +99,32 @@ impl Manual {
             .collect_vec()
     }
 
-    fn get_gears(&self) -> Vec<Point> {
+    fn get_symbols(&self) -> Vec<Symbol> {
         self.0
             .iter()
             .enumerate()
             .map(|(y, row)| {
                 let y = y.clone();
-                row.iter().enumerate().filter_map(move |(x, c)| match c {
-                    '*' => Some(Point::new_u(x, y)),
-                    _ => None,
+                row.iter().enumerate().filter_map(move |(x, c)| {
+                    if is_symbol(*c) {
+                        Some(Symbol {
+                            value: *c,
+                            point: Point::new_u(x, y),
+                        })
+                    } else {
+                        None
+                    }
                 })
             })
             .flatten()
             .collect_vec()
     }
 
-    fn get_adjacent(&self, p: &Point) -> Vec<char> {
-        self.get_adjacent_points(p)
+    fn get_gears(&self) -> Vec<Point> {
+        self.get_symbols()
             .iter()
-            .map(|p| self.get(p))
-            .collect_vec()
-    }
-
-    fn get_adjacent_points(&self, p: &Point) -> Vec<Point> {
-        p.get_adjacent_diagonal()
-            .iter()
-            .filter(|p| self.is_inside(p))
-            .copied()
+            .filter(|s| s.value == '*')
+            .map(|g| g.point)
             .collect()
     }
 
@@ -146,6 +140,12 @@ struct PartNumber {
     value: u32,
     row: usize,
     range: Range<usize>,
+}
+
+#[derive(Debug, Clone)]
+struct Symbol {
+    value: char,
+    point: Point,
 }
 
 impl PartNumber {

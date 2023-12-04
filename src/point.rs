@@ -25,9 +25,7 @@ impl Point {
     }
 
     pub fn is_adjacent(&self, p: &Point) -> bool {
-        map_from(self, ADJACENT_CARDINAL.to_vec())
-            .iter()
-            .any(|px| px == p)
+        self.get_adjacent().iter().any(|px| px == p)
     }
 
     pub fn get_adjacent(&self) -> Vec<Point> {
@@ -35,9 +33,7 @@ impl Point {
     }
 
     pub fn is_adjacent_diagonal(&self, p: &Point) -> bool {
-        map_from(self, ADJACENT_DIAGONAL.to_vec())
-            .iter()
-            .any(|px| px == p)
+        self.get_adjacent_diagonal().iter().any(|px| px == p)
     }
 
     pub fn get_adjacent_diagonal(&self) -> Vec<Point> {
