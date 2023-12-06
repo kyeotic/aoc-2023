@@ -7,6 +7,7 @@ use time_humanize::HumanTime;
 
 pub mod grid;
 pub mod iter;
+pub mod parse;
 pub mod point;
 
 pub fn get_input(day: &str) -> String {
