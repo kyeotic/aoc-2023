@@ -10,22 +10,23 @@ use itertools::Itertools;
 fn main() {
     let input = get_input("04");
     // let lines = input.lines();
+
     let cards: Vec<Card> = input
         .lines()
         .map(|l| l.parse::<Card>().unwrap())
         .collect_vec();
 
-    let a: u32 = cards.iter().map(|c| c.score).sum();
-    let b = part2(cards);
-
-    report(&a, &b);
-
-    // uncomment once you have correct to support refactoring
-    assert_eq!(a, 20829);
-    assert_eq!(b, 12648035);
+    report(
+        (|| part1(&cards), Some(13), Some(20829)),
+        (|| part2(&cards), Some(30), Some(12648035)),
+    );
 }
 
-fn part2(cards: Vec<Card>) -> u32 {
+fn part1(cards: &Vec<Card>) -> u32 {
+    cards.clone().iter().map(|c| c.score).sum()
+}
+
+fn part2(cards: &Vec<Card>) -> u32 {
     let mut duplicates: HashMap<u32, u32> = HashMap::new();
 
     for c in cards.clone() {

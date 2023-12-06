@@ -17,18 +17,24 @@ fn main() {
         .lines()
         .map(|l| l.parse::<Game>().unwrap())
         .collect_vec();
-    let a: u32 = games
-        .iter()
-        .filter(|g| g.has_max(&a_max))
-        .map(|g| g.id)
-        .sum();
-    let b: u32 = games.iter().map(|g| g.get_min().power()).sum();
-
-    report(&a, &b);
-
-    // uncomment once you have correct to support refactoring
-    assert_eq!(a, 2369);
-    assert_eq!(b, 66363);
+    report(
+        (
+            || {
+                games
+                    .iter()
+                    .filter(|g| g.has_max(&a_max))
+                    .map(|g| g.id)
+                    .sum()
+            },
+            Some(8),
+            Some(2369),
+        ),
+        (
+            || games.iter().map(|g| g.get_min().power()).sum(),
+            Some(2286),
+            Some(66363),
+        ),
+    );
 }
 
 struct Game {

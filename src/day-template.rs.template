@@ -10,11 +10,10 @@ fn main() {
     let a = part1();
     let b = part2();
 
-    report(&a, &b);
-
-    // uncomment once you have correct to support refactoring
-    // assert_eq!(a, 1);
-    // assert_eq!(b, 2);
+    report(
+        (|| part1(input.clone()), Some(1), None),
+        (|| part2(input.clone()), None, None),
+    );
 }
 
 fn part1() -> u32 {

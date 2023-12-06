@@ -7,15 +7,18 @@ extern crate lazy_static;
 fn main() {
     let input = get_input("01");
 
-    let a: u32 = input.lines().map(extract_val).sum();
-    // let a = 1;
-    let b: u32 = input.lines().map(extract_named_val).sum();
-
-    report(&a, &b);
-
-    // uncomment once you have correct to support refactoring
-    assert_eq!(a, 54390);
-    assert_eq!(b, 54277);
+    report(
+        (
+            || input.lines().map(extract_val).sum(),
+            Some(142),
+            Some(54390),
+        ),
+        (
+            || input.lines().map(extract_named_val).sum(),
+            Some(281),
+            Some(54277),
+        ),
+    );
 }
 
 fn extract_val(line: &str) -> u32 {

@@ -11,15 +11,10 @@ fn main() {
     let input = get_input("03");
     let manual = Manual::from(&input);
 
-    let a = part1(&manual);
-    let b = part2(&manual);
-
-    report(&a, &b);
-
-    // uncomment once you have correct to support refactoring
-    // assert_eq!(a, 4361);
-    assert_eq!(a, 533775);
-    assert_eq!(b, 78236071);
+    report(
+        (|| part1(&manual), Some(4361), Some(533775)),
+        (|| part2(&manual), Some(467835), Some(78236071)),
+    );
 }
 
 fn part1(manual: &Manual) -> u32 {
