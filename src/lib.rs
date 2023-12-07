@@ -34,14 +34,21 @@ where
 {
     let (result, time) = measure(part.0);
 
-    let matches = if part.2.is_some() && result == part.2.unwrap() {
-        "✅"
+    let matches = if part.2.is_some() && &result == part.2.as_ref().unwrap() {
+        "✅".to_owned()
     } else if part.1.is_some() && &result == part.1.as_ref().unwrap() {
-        "🟦"
+        "🟦".to_owned()
     } else if part.1.is_none() {
-        "🟨"
+        "🟨".to_owned()
     } else {
-        "❌"
+        format!(
+            "❌ = {}",
+            if part.2.is_some() {
+                part.2.unwrap()
+            } else {
+                part.1.unwrap()
+            }
+        )
     };
 
     println!(
