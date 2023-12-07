@@ -19,14 +19,14 @@ fn main() {
 }
 
 fn part1(input: &str) -> u32 {
-    calc_winners(input, false)
+    calc_winners(input, None)
 }
 
 fn part2(input: &str) -> u32 {
-    calc_winners(input, true)
+    calc_winners(input, Some('J'))
 }
 
-fn calc_winners(input: &str, jokers: bool) -> u32 {
+fn calc_winners(input: &str, wild: Option<char>) -> u32 {
     input
         .lines()
         .map(|l| {
@@ -35,7 +35,7 @@ fn calc_winners(input: &str, jokers: bool) -> u32 {
             let bid: u32 = bid.parse().unwrap();
             (hand, bid)
         })
-        .sorted_by(|a, b| camel_rank(a, b, jokers))
+        .sorted_by(|a, b| camel_rank(a, b, wild))
         .rev()
         .enumerate()
         .map(|(i, (_, bid))| bid * (i as u32 + 1))
@@ -53,16 +53,16 @@ enum CamelHand {
     HighCard,
 }
 
-fn camel_rank(a: &(Vec<char>, u32), b: &(Vec<char>, u32), jokers: bool) -> Ordering {
-    let a_hand = camel_hand(&a.0, jokers);
-    let b_hand = camel_hand(&b.0, jokers);
+fn camel_rank(a: &(Vec<char>, u32), b: &(Vec<char>, u32), wild: Option<char>) -> Ordering {
+    let a_hand = camel_hand(&a.0, wild);
+    let b_hand = camel_hand(&b.0, wild);
 
     match a_hand.cmp(&b_hand) {
         Ordering::Greater => Ordering::Greater,
         Ordering::Less => Ordering::Less,
         Ordering::Equal => {
             for (i, c) in a.0.iter().enumerate() {
-                match card_rank(c, jokers).cmp(&card_rank(&b.0[i], jokers)) {
+                match card_rank(c, wild).cmp(&card_rank(&b.0[i], wild)) {
                     Ordering::Greater => return Ordering::Greater,
                     Ordering::Less => return Ordering::Less,
                     Ordering::Equal => continue,
@@ -73,25 +73,27 @@ fn camel_rank(a: &(Vec<char>, u32), b: &(Vec<char>, u32), jokers: bool) -> Order
     }
 }
 
-fn camel_hand(hand: &Vec<char>, jokers: bool) -> CamelHand {
+fn camel_hand(hand: &Vec<char>, wild: Option<char>) -> CamelHand {
     let common = Counter::<&char, u32>::init(hand).most_common();
-    let max = common
+    let max_unique = common
         .iter()
-        .filter(|k| !jokers || k.0 != &'J')
+        .filter(|k| wild.is_none() || k.0 != &wild.unwrap())
         .map(|k| k.1)
         .max()
         .unwrap_or(0);
-
     // let j = 0;
-    let j = hand.iter().filter(|c| c == &&'J' && jokers).count() as u32;
+    let j = hand
+        .iter()
+        .filter(|c| wild.is_some() && c == &&wild.unwrap())
+        .count() as u32;
 
-    if max + j == 5 || j == 5 {
+    if max_unique + j == 5 || j == 5 {
         CamelHand::FiveKind
-    } else if max + j == 4 || j == 4 {
+    } else if max_unique + j == 4 || j == 4 {
         CamelHand::FourKind
     } else if is_full_house(&common, j) {
         CamelHand::FullHouse
-    } else if max + j == 3 || j == 3 {
+    } else if max_unique + j == 3 || j == 3 {
         CamelHand::ThreeKind
     } else if common.iter().filter(|k| k.1 == 2).count() == 2 {
         // There is no way to have TwoPair with a joker
@@ -104,8 +106,8 @@ fn camel_hand(hand: &Vec<char>, jokers: bool) -> CamelHand {
     }
 }
 
-fn is_full_house(common: &Vec<(&char, u32)>, joker_count: u32) -> bool {
-    match joker_count {
+fn is_full_house(common: &Vec<(&char, u32)>, wild_count: u32) -> bool {
+    match wild_count {
         0 => common.iter().any(|k| k.1 == 3) && common.iter().any(|k| k.1 == 2),
         1 => common.iter().filter(|k| k.1 == 2).count() == 2,
         // 2 Jokers can't make FullHouse because any other pair would be FourKind
@@ -114,8 +116,8 @@ fn is_full_house(common: &Vec<(&char, u32)>, joker_count: u32) -> bool {
     }
 }
 
-fn card_rank(c: &char, jokers: bool) -> u32 {
-    if jokers && c == &'J' {
+fn card_rank(c: &char, wild: Option<char>) -> u32 {
+    if wild.is_some() && c == &wild.unwrap() {
         CARDS.len() as u32
     } else {
         CARDS.iter().position(|i| c == i).unwrap() as u32
