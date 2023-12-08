@@ -8,7 +8,7 @@ fn main() {
     println!("=====Day {}=====\n", day);
 
     Command::new("cargo")
-        .args(["run", "-q", "--color", "always", "--release", "--bin", &day])
+        .args(["run", "-q", "--color", "always", "--bin", &day])
         .spawn()
         .unwrap();
 }
