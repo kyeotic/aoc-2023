@@ -5,7 +5,7 @@ use anyhow::{Context, Result};
 use indexmap::IndexMap;
 use std::str::FromStr;
 
-use aoc::{get_input, report};
+use aoc::{get_input, math::lcm, report};
 use itertools::Itertools;
 
 fn main() {
@@ -60,7 +60,7 @@ fn part2(input: &str) -> u64 {
     let n = cycles
         .iter()
         .map(|n| *n as u64)
-        .reduce(|a, b| num::integer::lcm(a, b))
+        .reduce(|a, b| lcm(a, b))
         .unwrap();
 
     n
