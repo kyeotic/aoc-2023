@@ -17,7 +17,7 @@ fn main() {
     );
 }
 
-fn part1(manual: &Manual) -> u32 {
+fn part1(manual: &Manual) -> u64 {
     manual
         .numbers
         .iter()
@@ -33,7 +33,7 @@ fn part1(manual: &Manual) -> u32 {
         .sum()
 }
 
-fn part2(manual: &Manual) -> u32 {
+fn part2(manual: &Manual) -> u64 {
     manual
         .get_gears()
         .iter()
@@ -46,7 +46,7 @@ fn part2(manual: &Manual) -> u32 {
                 .collect_vec();
 
             if adj_parts.len() == 2 {
-                Some(adj_parts.iter().product::<u32>())
+                Some(adj_parts.iter().product::<u64>())
             } else {
                 None
             }
@@ -109,7 +109,7 @@ fn get_symbols(grid: &Grid<char>) -> Vec<GridPoint<char>> {
 
 #[derive(Debug, Clone)]
 struct PartNumber {
-    value: u32,
+    value: u64,
     points: Vec<Point>,
 }
 

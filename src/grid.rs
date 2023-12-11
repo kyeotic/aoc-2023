@@ -1,21 +1,29 @@
+use crate::point::{CardinalDirection, Point};
 use itertools::Itertools;
-
-use crate::point::Point;
-
-// use crate::point::Point;
+use std::fmt::Debug;
 
 #[derive(Debug, Clone)]
 pub struct Grid<T: Copy> {
     pub points: Vec<Vec<GridPoint<T>>>,
 }
 
-impl Grid<char> {
+impl<T> Grid<T>
+where
+    T: Copy + From<char> + Debug,
+{
     pub fn from(s: &str) -> Self {
-        Self::new(s.lines().map(|l| l.chars().collect_vec()).collect())
+        Self::new(
+            s.lines()
+                .map(|l| l.chars().map(|c| c.into()).collect_vec())
+                .collect_vec(),
+        )
     }
 }
 
-impl<T: Copy> Grid<T> {
+impl<T> Grid<T>
+where
+    T: Copy + Debug,
+{
     pub fn new(vals: Vec<Vec<T>>) -> Self {
         Self {
             points: vals
@@ -32,22 +40,81 @@ impl<T: Copy> Grid<T> {
         }
     }
 
-    pub fn get(&self, x: usize, y: usize) -> Option<GridPoint<T>> {
-        Some(self.points.get(y as usize)?.get(x as usize)?.to_owned())
+    pub fn get(&self, x: i64, y: i64) -> Option<GridPoint<T>> {
+        self.get_u(x as usize, y as usize)
     }
 
-    //     fn is_inside(&self, p: &Point) -> bool {
-    //         let x_max = self.0.first().unwrap().len();
-    //         let y_max = self.0.len();
-    //         p.x >= 0 && p.x < x_max as i32 && p.y >= 0 && p.y < y_max as i32
-    //     }
+    pub fn get_u(&self, x: usize, y: usize) -> Option<GridPoint<T>> {
+        Some(self.points.get(y)?.get(x)?.to_owned())
+    }
+
+    pub fn get_point(&self, p: &Point) -> Option<GridPoint<T>> {
+        Some(self.points.get(p.y as usize)?.get(p.x as usize)?.to_owned())
+    }
+
+    pub fn get_neighbors(&self, p: &GridPoint<T>) -> Vec<GridPoint<T>> {
+        self.to_grid(&Point::from(p).get_adjacent())
+    }
+
+    pub fn get_neighbor_steps(&self, p: &GridPoint<T>) -> Vec<(GridPoint<T>, CardinalDirection)> {
+        let p = Point::from(p);
+        let neighbors = self.to_grid(&p.get_adjacent());
+        neighbors
+            .into_iter()
+            .map(|n| {
+                (
+                    n,
+                    match &p.distance(&n.into()) {
+                        (0, -1) => CardinalDirection::Up,
+                        (0, 1) => CardinalDirection::Down,
+                        (-1, 0) => CardinalDirection::Left,
+                        (1, 0) => CardinalDirection::Right,
+                        _ => panic!("Invalid distance {:?}", p.distance(&n.into())),
+                    },
+                )
+            })
+            .collect_vec()
+    }
+
+    pub fn to_grid(&self, points: &Vec<Point>) -> Vec<GridPoint<T>> {
+        points
+            .iter()
+            .filter_map(|p| {
+                if self.is_inside(p) {
+                    self.get_point(p)
+                } else {
+                    None
+                }
+            })
+            .collect_vec()
+    }
+    pub fn step(&self, from: &GridPoint<T>, dir: CardinalDirection) -> Option<GridPoint<T>> {
+        match dir {
+            CardinalDirection::Up => self.get(from.x, from.y - 1),
+            CardinalDirection::Down => self.get(from.x, from.y + 1),
+            CardinalDirection::Left => self.get(from.x - 1, from.y),
+            CardinalDirection::Right => self.get(from.x + 1, from.y),
+        }
+    }
+
+    pub fn is_inside(&self, p: &Point) -> bool {
+        p.x >= 0 && p.x < self.size_x() && p.y >= 0 && p.y < self.size_y()
+    }
+
+    pub fn size_x(&self) -> i64 {
+        (self.points.first().unwrap().len() - 1) as i64
+    }
+
+    pub fn size_y(&self) -> i64 {
+        (self.points.len() - 1) as i64
+    }
 
     pub fn iter(&self) -> GridIter<'_, T> {
         GridIter {
             grid: &self,
-            cursor: Some((0, 0)), // to_visit: (0..self.points.len())
-                                  //         .cartesian_product(0..self.points[0].len())
-                                  //         .collect(),
+            x_max: self.size_x() as usize,
+            y_max: self.size_y() as usize,
+            cursor: Some((0, 0)),
         }
     }
 
@@ -56,24 +123,27 @@ impl<T: Copy> Grid<T> {
     // }
 }
 
-pub struct GridIter<'a, T: Copy> {
+pub struct GridIter<'a, T: Copy + Debug> {
     grid: &'a Grid<T>,
+    x_max: usize,
+    y_max: usize,
     cursor: Option<(usize, usize)>,
 }
 
-impl<'a, T: Copy> Iterator for GridIter<'a, T> {
+impl<'a, T: Copy + Debug> Iterator for GridIter<'a, T> {
     type Item = GridPoint<T>;
     fn next(&mut self) -> Option<Self::Item> {
-        let x_max = self.grid.points.first()?.len() - 1;
-        let y_max = self.grid.points.len() - 1;
-
         let (x, y) = self.cursor?;
-        let n = Some(self.grid.get(x, y)?);
+        let n = Some(self.grid.get_u(x, y)?);
 
-        if x == x_max && y == y_max {
+        if x == self.x_max && y == self.y_max {
             self.cursor = None
         }
-        self.cursor = Some(if x == x_max { (0, y + 1) } else { (x + 1, y) });
+        self.cursor = Some(if x == self.x_max {
+            (0, y + 1)
+        } else {
+            (x + 1, y)
+        });
 
         n
     }
@@ -81,18 +151,18 @@ impl<'a, T: Copy> Iterator for GridIter<'a, T> {
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy)]
 pub struct GridPoint<T> {
-    pub x: i32,
-    pub y: i32,
+    pub x: i64,
+    pub y: i64,
     pub value: T,
 }
 
 impl<T: Clone> GridPoint<T> {
-    pub fn new(x: i32, y: i32, value: T) -> Self {
+    pub fn new(x: i64, y: i64, value: T) -> Self {
         Self { x, y, value }
     }
 
     pub fn new_u(x: usize, y: usize, value: T) -> Self {
-        Self::new(x as i32, y as i32, value)
+        Self::new(x as i64, y as i64, value)
     }
 }
 

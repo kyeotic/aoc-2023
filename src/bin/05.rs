@@ -1,4 +1,4 @@
-#![allow(dead_code, unused_imports, unreachable_code)]
+#![allow(dead_code, unused_imports)]
 #[macro_use]
 extern crate lazy_static;
 use std::{
