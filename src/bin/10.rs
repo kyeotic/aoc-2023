@@ -1,53 +1,101 @@
 #![allow(dead_code, unused_imports)]
 #[macro_use]
 extern crate lazy_static;
+use std::collections::{HashMap, HashSet};
 use std::mem::swap;
 
 use anyhow::{Context, Result};
 use aoc::grid::{Grid, GridPoint};
 use aoc::point::{CardinalDirection as Dir, Point};
 use aoc::{get_input, report};
+use indexmap::IndexSet;
 use itertools::Itertools;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
 fn main() {
     let input = get_input("10");
 
     report(
         (|| part1(&input), Some(4), Some(6886)),
-        (|| part2(&input), None, None),
+        (|| part2(&input), Some(4), Some(371)),
     );
 }
 
 fn part1(input: &str) -> u64 {
+    (get_path(&Grid::from(input)).len() / 2) as u64
+}
+
+fn part2(input: &str) -> u64 {
     let grid: Grid<Pipe> = Grid::from(input);
+    let path = get_path(&grid);
     let start = grid.iter().find(|p| p.value == Pipe::Start).unwrap();
 
-    let mut travel = 1;
-    let (mut next, to) = grid
-        .get_neighbor_steps(&start)
-        .into_iter()
-        .find(|(g, step)| g.value.can_accept(&step.inverse()))
+    let conns = get_start_connections(&start, &grid);
+    let correct_start = Pipe::iter()
+        .find(|p| conns.iter().all(|(_, d)| p.can_accept(d)))
         .unwrap();
+
+    grid.points
+        .iter()
+        .map(|row| {
+            row.iter()
+                .enumerate()
+                .filter(|(i, p)| {
+                    if path.contains(*p) {
+                        return false;
+                    };
+                    let crosses = &row[0..*i]
+                        .iter()
+                        .filter(|rc| {
+                            path.contains(*rc)
+                                // The start needs to be replaced with the correct pipe for border detection
+                                && is_border(if rc.value == Pipe::Start {
+                                    &correct_start
+                                } else {
+                                    &rc.value
+                                })
+                        })
+                        .count();
+
+                    crosses % 2 == 1
+                })
+                .count() as u64
+        })
+        .sum::<u64>()
+}
+
+fn get_path(grid: &Grid<Pipe>) -> IndexSet<GridPoint<Pipe>> {
+    let mut path: IndexSet<GridPoint<Pipe>> = IndexSet::new();
+    let start = grid.iter().find(|p| p.value == Pipe::Start).unwrap();
+    path.insert(start.clone());
+
+    let conns = get_start_connections(&start, &grid);
+    let (mut next, to) = conns.first().unwrap();
 
     let mut from = to.inverse();
 
     while next.value != Pipe::Start {
+        path.insert(next.clone());
         let to = next.value.to(&from);
         next = grid.step(&next, to).unwrap();
         from = to.inverse();
-        travel += 1;
     }
 
-    // println!("final {travel:?}");
-
-    travel / 2
+    path
 }
 
-fn part2(_input: &str) -> u64 {
-    2
+fn get_start_connections(
+    start: &GridPoint<Pipe>,
+    grid: &Grid<Pipe>,
+) -> Vec<(GridPoint<Pipe>, Dir)> {
+    grid.get_neighbor_steps(&start)
+        .into_iter()
+        .filter(|(g, step)| g.value.can_accept(&step.inverse()))
+        .collect_vec()
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(EnumIter, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Pipe {
     Vertical,
     Horizontal,
@@ -60,20 +108,21 @@ enum Pipe {
 }
 
 impl Pipe {
-    fn to(&self, from: &Dir) -> Dir {
+    fn pairs(&self) -> (Dir, Dir) {
         match self {
-            Pipe::Vertical => Pipe::travel(from, Dir::Up, Dir::Down),
-            Pipe::Horizontal => Pipe::travel(from, Dir::Left, Dir::Right),
-            Pipe::NorthToEast => Pipe::travel(from, Dir::Up, Dir::Right),
-            Pipe::NorthToWest => Pipe::travel(from, Dir::Up, Dir::Left),
-            Pipe::SouthToWest => Pipe::travel(from, Dir::Down, Dir::Left),
-            Pipe::SouthToEast => Pipe::travel(from, Dir::Down, Dir::Right),
+            Pipe::Vertical => (Dir::Up, Dir::Down),
+            Pipe::Horizontal => (Dir::Left, Dir::Right),
+            Pipe::NorthToEast => (Dir::Up, Dir::Right),
+            Pipe::NorthToWest => (Dir::Up, Dir::Left),
+            Pipe::SouthToWest => (Dir::Down, Dir::Left),
+            Pipe::SouthToEast => (Dir::Down, Dir::Right),
             Pipe::Ground => panic!("cannot travel from ground"),
             Pipe::Start => panic!("cannot travel through start"),
         }
     }
 
-    fn travel(from: &Dir, a: Dir, b: Dir) -> Dir {
+    fn to(&self, from: &Dir) -> Dir {
+        let (a, b) = self.pairs();
         if from == &a {
             b
         } else {
@@ -82,24 +131,8 @@ impl Pipe {
     }
 
     fn can_accept(&self, from: &Dir) -> bool {
-        match from {
-            Dir::Up => {
-                *self == Pipe::Vertical || *self == Pipe::NorthToEast || *self == Pipe::NorthToWest
-            }
-            Dir::Down => {
-                *self == Pipe::Vertical || *self == Pipe::SouthToEast || *self == Pipe::SouthToWest
-            }
-            Dir::Left => {
-                *self == Pipe::Horizontal
-                    || *self == Pipe::NorthToWest
-                    || *self == Pipe::SouthToWest
-            }
-            Dir::Right => {
-                *self == Pipe::Horizontal
-                    || *self == Pipe::NorthToEast
-                    || *self == Pipe::SouthToEast
-            }
-        }
+        let (a, b) = self.pairs();
+        from == &a || from == &b
     }
 }
 
@@ -119,16 +152,10 @@ impl From<char> for Pipe {
     }
 }
 
-// enum Pipe {
-//     Vertical(Dir::Up, Dir::Down),
-//     Horizontal,
-//     NorthToEast,
-//     NorthToWest,
-//     SouthToWest,
-//     SouthToEast,
-//     Ground,
-//     Start,
-// }
+lazy_static! {
+    static ref BORDERS: Vec<Pipe> = vec![Pipe::Vertical, Pipe::NorthToEast, Pipe::NorthToWest,];
+}
 
-// the starting points can `accept(from) because Pipe<From,To>
-// so the pipe maps a boolean as well as a SOURCE-DESTINATION MAPPING`
+fn is_border(p: &Pipe) -> bool {
+    BORDERS.contains(p)
+}

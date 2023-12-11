@@ -149,7 +149,7 @@ impl<'a, T: Copy + Debug> Iterator for GridIter<'a, T> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash)]
 pub struct GridPoint<T> {
     pub x: i64,
     pub y: i64,
