@@ -183,3 +183,12 @@ impl<T> From<&GridPoint<T>> for Point {
         }
     }
 }
+
+pub fn into_columns<T: Clone>(grid: &Vec<Vec<T>>) -> Vec<Vec<T>> {
+    grid.first()
+        .unwrap()
+        .iter()
+        .enumerate()
+        .map(|(i, _)| grid.iter().map(|row| row[i].clone()).collect_vec())
+        .collect_vec()
+}

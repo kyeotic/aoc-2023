@@ -47,6 +47,10 @@ impl Point {
     pub fn distance(&self, to: &Point) -> (i64, i64) {
         (to.x - self.x, to.y - self.y)
     }
+
+    pub fn manhattan_distance(&self, to: &Point) -> i64 {
+        (self.x - to.x).abs() + (self.y - to.y).abs()
+    }
 }
 
 fn map_from(p: &Point, to: Vec<(i64, i64)>) -> Vec<Point> {

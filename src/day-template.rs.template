@@ -18,6 +18,6 @@ fn part1(input: &str) -> u64 {
     1
 }
 
-fn part2(input: &str) -> u64 {
+fn part2(_input: &str) -> u64 {
     2
 }
