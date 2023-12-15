@@ -88,6 +88,7 @@ where
             })
             .collect_vec()
     }
+
     pub fn step(&self, from: &GridPoint<T>, dir: CardinalDirection) -> Option<GridPoint<T>> {
         match dir {
             CardinalDirection::Up => self.get(from.x, from.y - 1),

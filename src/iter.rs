@@ -9,16 +9,6 @@ pub fn intersection<T: Eq + Hash + Copy>(a: &Vec<T>, b: &Vec<T>) -> Vec<T> {
     unique_a.intersection(&unique_b).copied().collect()
 }
 
-pub fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>>
-where
-    T: Clone,
-{
-    assert!(!v.is_empty());
-    (0..v[0].len())
-        .map(|i| v.iter().map(|inner| inner[i].clone()).collect::<Vec<T>>())
-        .collect()
-}
-
 pub fn grid_iterator<T: Copy + Debug>(grid: &Vec<Vec<T>>) -> GridIter<'_, T> {
     GridIter {
         grid,
@@ -53,3 +43,31 @@ impl<'a, T: Copy + Debug> Iterator for GridIter<'a, T> {
         Some((n, x, y))
     }
 }
+
+// pub struct ColIter<'a, T> {
+//     grid: &'a Vec<Vec<T>>,
+//     y_max: usize,
+//     cursor: Option<usize>,
+// }
+
+// impl<'a, T> Iterator for ColIter<'a, T> {
+//     type Item = &[T];
+
+//     fn next(&mut self) -> Option<Self::Item> {
+//         let col = self.cursor?
+//         let n = self.grid[x][y];
+
+//         if x == self.x_max && y == self.y_max {
+//             self.cursor = None
+//         }
+//         self.cursor = Some(if x == self.x_max {
+//             (0, y + 1)
+//         } else {
+//             (x + 1, y)
+//         });
+
+//         Some((n, x, y))
+//     }
+// }
+
+// pub fn column_iter

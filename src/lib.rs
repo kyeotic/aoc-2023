@@ -5,6 +5,7 @@ use std::time::Instant;
 use std::{env, fs};
 use time_humanize::HumanTime;
 
+pub mod geo;
 pub mod grid;
 pub mod iter;
 pub mod math;
