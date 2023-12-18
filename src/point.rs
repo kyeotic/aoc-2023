@@ -6,7 +6,7 @@ lazy_static! {
     static ref ADJACENT_CARDINAL: Vec<(i64, i64)> = vec![(1, 0), (0, 1), (-1, 0), (0, -1)];
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash)]
 pub struct Point {
     pub x: i64,
     pub y: i64,
@@ -57,7 +57,7 @@ fn map_from(p: &Point, to: Vec<(i64, i64)>) -> Vec<Point> {
     to.iter().map(|(dx, dy)| p.to(*dx, *dy)).collect_vec()
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CardinalDirection {
     Up,
     Down,

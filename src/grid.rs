@@ -20,6 +20,16 @@ where
     }
 }
 
+impl Grid<u32> {
+    pub fn from_num(s: &str) -> Self {
+        Self::new(
+            s.lines()
+                .map(|l| l.chars().map(|c| c.to_digit(10).unwrap()).collect_vec())
+                .collect_vec(),
+        )
+    }
+}
+
 impl<T> Grid<T>
 where
     T: Copy + Debug,
